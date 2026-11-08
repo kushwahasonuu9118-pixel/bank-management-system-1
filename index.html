@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Transaction Management System</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Mobile Sidebar Overlay Backdrop -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileMenu()"></div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-building-columns"></i>
+                <h2>Apex Bank</h2>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" onclick="switchTab('dashboard'); closeMobileMenu();">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" onclick="switchTab('accounts'); closeMobileMenu();">
+                    <i class="fa-solid fa-users"></i> Manage Accounts
+                </a>
+                <a href="#" class="nav-item" onclick="switchTab('transactions'); closeMobileMenu();">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Transactions
+                </a>
+                <a href="#" class="nav-item" onclick="switchTab('history'); closeMobileMenu();">
+                    <i class="fa-solid fa-clock-rotate-left"></i> History Log
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <p>BCA Project &copy; 2026</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="top-bar">
+                <div class="mobile-header-bar">
+                    <button class="menu-toggle" onclick="toggleMobileMenu()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                </div>
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="globalSearch" placeholder="Search accounts, names..." oninput="handleSearch()">
+                </div>
+                <div class="account-selector">
+                    <label for="activeAccountSelect">Active Account:</label>
+                    <select id="activeAccountSelect" onchange="changeActiveAccount(this.value)">
+                        <!-- Populated dynamically via JS -->
+                    </select>
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <section id="dashboard" class="tab-content active">
+                <div class="welcome-banner">
+                    <div>
+                        <h1 id="welcomeTitle">Welcome, User</h1>
+                        <p>Bank Transaction Management Portal</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal('openAccountModal')">
+                        <i class="fa-solid fa-plus"></i> Open New Account
+                    </button>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-blue"><i class="fa-solid fa-wallet"></i></div>
+                        <div class="stat-details">
+                            <h3>Current Balance</h3>
+                            <p class="stat-value" id="currentBalance">₹0.00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon bg-green"><i class="fa-solid fa-arrow-down-left"></i></div>
+                        <div class="stat-details">
+                            <h3>Total Deposits</h3>
+                            <p class="stat-value" id="totalDeposits">₹0.00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon bg-red"><i class="fa-solid fa-arrow-up-right"></i></div>
+                        <div class="stat-details">
+                            <h3>Total Withdrawals</h3>
+                            <p class="stat-value" id="totalWithdrawals">₹0.00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon bg-purple"><i class="fa-solid fa-receipt"></i></div>
+                        <div class="stat-details">
+                            <h3>Total Transactions</h3>
+                            <p class="stat-value" id="totalTransactionsCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Action Forms -->
+                <div class="grid-2-col">
+                    <!-- Deposit & Withdrawal Card -->
+                    <div class="card">
+                        <h2><i class="fa-solid fa-hand-holding-dollar"></i> Quick Actions</h2>
+                        <div class="tab-buttons">
+                            <button id="btnTabDeposit" class="tab-btn active" onclick="setTransactionType('Deposit')">Deposit</button>
+                            <button id="btnTabWithdraw" class="tab-btn" onclick="setTransactionType('Withdrawal')">Withdrawal</button>
+                        </div>
+                        <form id="transactionForm" onsubmit="handleTransaction(event)">
+                            <div class="form-group">
+                                <label for="txAmount">Amount (₹)</label>
+                                <input type="number" id="txAmount" min="1" step="0.01" placeholder="Enter amount" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="txRemarks">Remarks / Description</label>
+                                <input type="text" id="txRemarks" placeholder="e.g. Salary, Rent, Shopping" required>
+                            </div>
+                            <button type="submit" id="txSubmitBtn" class="btn btn-success block-btn">
+                                <i class="fa-solid fa-check"></i> Process Deposit
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Account Summary Card -->
+                    <div class="card">
+                        <h2><i class="fa-solid fa-id-card"></i> Account Details</h2>
+                        <div class="account-info-list" id="accountInfoDetails">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent History Preview -->
+                <div class="card mt-20">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-list"></i> Recent Transactions</h2>
+                        <a href="#" onclick="switchTab('history')" class="view-all-link">View All</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Date & Time</th>
+                                    <th>Type</th>
+                                    <th>Remarks</th>
+                                    <th>Amount</th>
+                                    <th>Balance After</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTransactionsTable">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Accounts Management View -->
+            <section id="accounts" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-address-book"></i> All Registered Accounts</h2>
+                        <button class="btn btn-primary" onclick="openModal('openAccountModal')">
+                            <i class="fa-solid fa-user-plus"></i> Open Account
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Acc No.</th>
+                                    <th>Account Holder</th>
+                                    <th>Account Type</th>
+                                    <th>Current Balance</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allAccountsTable">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transactions View -->
+            <section id="transactions" class="tab-content">
+                <div class="card">
+                    <h2><i class="fa-solid fa-money-bill-transfer"></i> Perform Transaction</h2>
+                    <form id="standaloneTxForm" onsubmit="handleStandaloneTransaction(event)">
+                        <div class="form-group">
+                            <label for="selectAccountTx">Select Account</label>
+                            <select id="selectAccountTx" required>
+                                <!-- Accounts options -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="standaloneType">Transaction Type</label>
+                            <select id="standaloneType" required>
+                                <option value="Deposit">Deposit</option>
+                                <option value="Withdrawal">Withdrawal</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="standaloneAmount">Amount (₹)</label>
+                            <input type="number" id="standaloneAmount" min="1" step="0.01" placeholder="Enter amount" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="standaloneRemarks">Remarks</label>
+                            <input type="text" id="standaloneRemarks" placeholder="Enter reason/note" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Execute Transaction</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Complete History Log View -->
+            <section id="history" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-clock-rotate-left"></i> Full Transaction History</h2>
+                        <div class="filter-controls">
+                            <select id="historyFilterType" onchange="filterHistory()">
+                                <option value="All">All Types</option>
+                                <option value="Deposit">Deposits Only</option>
+                                <option value="Withdrawal">Withdrawals Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tx ID</th>
+                                    <th>Account No</th>
+                                    <th>Date & Time</th>
+                                    <th>Type</th>
+                                    <th>Remarks</th>
+                                    <th>Amount</th>
+                                    <th>Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullHistoryTable">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal: Open New Account -->
+    <div id="openAccountModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-plus"></i> Create New Account</h3>
+                <span class="close-btn" onclick="closeModal('openAccountModal')">&times;</span>
+            </div>
+            <form id="createAccountForm" onsubmit="handleCreateAccount(event)">
+                <div class="form-group">
+                    <label for="newAccName">Full Name</label>
+                    <input type="text" id="newAccName" placeholder="e.g. Sonu Kumar" required>
+                </div>
+                <div class="form-group">
+                    <label for="newAccType">Account Type</label>
+                    <select id="newAccType" required>
+                        <option value="Savings">Savings Account</option>
+                        <option value="Current">Current Account</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="initialDeposit">Initial Deposit (₹)</label>
+                    <input type="number" id="initialDeposit" min="500" value="1000" required>
+                </div>
+                <button type="submit" class="btn btn-success block-btn">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
